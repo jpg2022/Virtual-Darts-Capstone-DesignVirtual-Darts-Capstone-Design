@@ -1,0 +1,93 @@
+import socket
+import csv
+
+host, port = 'raspberrypi.local', 50002 # enter ipv4 address of pc which is in the same network
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+try:
+	s.bind((host, port))
+except:
+	print("Failed to bind")
+
+s.listen(5)
+print("Waiting for data")
+
+(conn, addr) = s.accept()
+print("Connected")
+
+rowz = ''
+row1 = ''
+row2 = ''
+i = 1
+check = False
+
+def read_file(fileName):
+    lines_read = []
+    with open(fileName, 'rt', encoding='utf-8-sig') as csvfile: # encoding necessary to prevent corruption of first line
+        spamreader = csv.reader(csvfile, delimiter=' ', quotechar='|', skipinitialspace=True)
+        for row in spamreader:
+            line_to_send = ', '.join(row)
+            lines_read.append(line_to_send)
+            
+    return lines_read
+
+with open('CoordinateData.csv', 'r') as file:
+    reader = csv.reader(file)
+    for row in reader:
+        rowz = row
+        xcoordf = float(rowz[0])*10.26
+        xcoords = str(xcoordf)
+        ycoordf = float(rowz[1])*10.26
+        ycoords = str(xcoordf)
+        row1 = xcoords + "," + ycoords
+        row2 = xcoords + "," + ycoords
+
+while True:
+
+    stats_list = read_file("stats.csv") # file where the stats are stored
+    print(stats_list[0])
+    if (stats_list[0] == 'Latest update already received'):
+        char = 'w'
+    else:
+        char = 'a'
+
+        
+    data = conn.recv(1024)
+    data1 = data.decode('utf-8')
+    list = data1.split(",")
+
+    
+    if list[0] == "#":
+        with open('stats.csv', char, encoding='UTF8', newline='') as f:
+            writer = csv.writer(f)
+
+            # write the data
+            writer.writerow((list[1], list[2], list[3], list[4], list[5], list[6], list[7], list[8]))
+
+    i += 1        
+    print("Received:", data1)
+    while (check == False):
+        with open('CoordinateData.csv', 'r') as file:
+            reader = csv.reader(file)
+            for row in reader:
+                rowz = row
+            xcoordf = float(rowz[0])*10.26
+            xcoords = str(xcoordf)
+            ycoordf = float(rowz[1])*10.26
+            ycoords = str(ycoordf)
+            dist = float(rowz[2])
+            dists = str(dist)
+            row1 = xcoords + "," + ycoords
+            row11 = xcoords + "," + ycoords + "," + dists
+        if row1 != row2:
+            print(row1)
+            reply = row11
+            conn.sendall(reply.encode('utf-8'))
+            row2 = row1
+            check = True
+        #reply = input("Vector: ")
+    check = False
+    
+
+print("Clinet Disconnected...")
+conn.close()

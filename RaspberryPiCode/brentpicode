@@ -1,0 +1,49 @@
+import math
+import random
+import csv
+
+Yo = 1.76 #Height of individual
+Vinitial = random.randint(12,17) #initial velocity
+theta = random.randint(-5,3) * (math.pi / 180) #Y-Coordinate Angle
+phi = random.randint(-3,3) * (math.pi / 180) #X-Coordinate Angle
+G = 9.81
+with open('SensorData.csv', 'r') as file:
+    reader = csv.reader(file)
+    for row in reader:
+        rowz = row[0]
+dist1 = float(rowz)
+print(dist1)
+dist1 = dist1/1000
+distance =  dist1 #Distance to the dart board
+with open('AccelerometerData.csv', 'r') as file:
+    reader = csv.reader(file)
+    for row in reader:
+        rowz = row
+    row1 = rowz[0]
+    accelX = float(row1)
+    accelX = int(accelX)
+print(accelX)
+acceleration = accelX
+
+Vy = Vinitial * math.sin(theta)
+Vx = Vinitial * math.cos(theta)
+time = distance / Vx
+
+FinalHeight = Yo + Vy * time + 0.5 * G * (time *time)
+yCoordinate = FinalHeight - 1.73
+
+print("Y-Coordinate: ", yCoordinate, "m")
+xCoordinate = distance * math.tan(phi)
+print("X-Coordinate: ", xCoordinate, "m")
+
+#-----------------------------
+with open('CoordinateData.csv','w',newline='') as f:
+    thewriter = csv.writer(f)
+    #thewriter.writerow(['X-Coordinate',"Y-Coordinate"])
+    thewriter.writerow([xCoordinate,yCoordinate,distance])
+
+    #Coordinate values are calculated by distance from bullseye
+    # X-Coordinate:    negative <-> bulleye <-> positive
+    # Y-Coordinate:  positive
+    #                bullseye
+    #                negative
